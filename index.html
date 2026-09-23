@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biblioteca de documentos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+  /* ---------------------------------------------------------------
+     Paleta: escritorio de lectura. Superficie oscura (petróleo),
+     la hoja del PDF es lo único blanco, latón para lo activo.
+  ---------------------------------------------------------------- */
+  :root{
+    --desk:#223034;
+    --rail:#1A2528;
+    --sheet:#ffffff;
+    --ink:#E6E9E4;
+    --ink-dim:#8FA09B;
+    --brass:#D7A24C;
+    --line:rgba(230,233,228,.13);
+    --serif:"Newsreader","Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --rail-w:302px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--desk);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  button,input{font:inherit;color:inherit}
+  a{color:inherit}
+
+  :focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:2px}
+
+  .app{display:grid;grid-template-columns:var(--rail-w) 1fr;height:100dvh}
+
+  /* ---------- Rail de documentos ---------- */
+  .rail{
+    background:var(--rail);
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;
+    min-height:0;
+  }
+  .rail-head{padding:26px 22px 16px}
+  .rail-head h1{
+    font-family:var(--serif);
+    font-size:27px;font-weight:400;letter-spacing:-.01em;
+    margin:0;
+  }
+  .count{margin:2px 0 16px;color:var(--ink-dim);font-size:13px}
+  .filter{
+    width:100%;padding:8px 11px;
+    background:rgba(255,255,255,.05);
+    border:1px solid var(--line);border-radius:3px;
+    font-size:13.5px;
+  }
+  .filter::placeholder{color:var(--ink-dim)}
+
+  .doc-list{
+    list-style:none;margin:0;padding:6px 12px 12px;
+    overflow-y:auto;flex:1;min-height:0;
+  }
+  .doc{
+    display:block;width:100%;text-align:left;
+    background:none;border:0;cursor:pointer;
+    padding:11px 12px 11px 13px;
+    border-left:3px solid transparent;
+    border-radius:0 3px 3px 0;
+  }
+  .doc:hover{background:rgba(255,255,255,.045)}
+  .doc[aria-current="true"]{
+    background:rgba(215,162,76,.10);
+    border-left-color:var(--brass);
+  }
+  .doc .t{font-family:var(--serif);font-size:16.5px;line-height:1.3;display:block}
+  .doc .m{color:var(--ink-dim);font-size:12.5px;display:block;margin-top:3px}
+  .doc[aria-current="true"] .m{color:#C8B189}
+
+  .rail-foot{padding:14px 18px 18px;border-top:1px solid var(--line)}
+  .drop{
+    display:block;padding:14px 12px;text-align:center;cursor:pointer;
+    border:1px dashed var(--line);border-radius:4px;
+    color:var(--ink-dim);font-size:12.5px;line-height:1.45;
+  }
+  .drop:hover,.drop.over{border-color:var(--brass);color:var(--ink)}
+
+  /* ---------- Escenario / hoja ---------- */
+  .stage{
+    display:flex;flex-direction:column;min-width:0;min-height:0;
+    background:radial-gradient(130% 75% at 50% -12%,rgba(215,162,76,.11),transparent 62%);
+  }
+  .bar{
+    display:flex;align-items:flex-end;gap:20px;justify-content:space-between;
+    padding:20px 26px 16px;border-bottom:1px solid var(--line);
+  }
+  .bar h2{font-family:var(--serif);font-size:21px;font-weight:400;margin:0;line-height:1.25}
+  .bar .m{color:var(--ink-dim);font-size:13px;margin:3px 0 0}
+  .actions{display:flex;gap:8px;flex:none}
+  .act{
+    padding:7px 13px;border:1px solid var(--line);border-radius:3px;
+    background:rgba(255,255,255,.04);text-decoration:none;font-size:13.5px;white-space:nowrap;
+  }
+  .act:hover{background:rgba(255,255,255,.09);border-color:rgba(230,233,228,.3)}
+  .act[hidden]{display:none}
+
+  .sheet-wrap{flex:1;min-height:0;padding:22px 26px 26px;display:flex}
+  .sheet{
+    flex:1;min-height:0;background:var(--sheet);border-radius:2px;
+    box-shadow:0 1px 2px rgba(0,0,0,.4),0 18px 40px -12px rgba(0,0,0,.55);
+    overflow:hidden;position:relative;
+  }
+  .sheet iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+  .settle{animation:settle .32s ease-out}
+  @keyframes settle{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.settle{animation:none}}
+
+  /* estados dentro de la hoja */
+  .state{
+    position:absolute;inset:0;display:none;
+    flex-direction:column;align-items:center;justify-content:center;
+    gap:12px;padding:32px;text-align:center;color:#3E4B4F;background:#fff;
+  }
+  .state.on{display:flex}
+  .state h3{font-family:var(--serif);font-weight:400;font-size:22px;margin:0;color:#1B2427}
+  .state p{margin:0;max-width:42ch;font-size:14px;line-height:1.6}
+  .state code{background:#EDEFEA;padding:1px 5px;border-radius:3px;font-size:13px}
+  .state .act{color:#1B2427;border-color:#CBD2CD;background:#F3F5F1;margin-top:6px}
+  .state .act:hover{background:#E7EAE5;border-color:#9AA6A0}
+
+  /* ---------- Móvil: el rail pasa arriba como tira horizontal ---------- */
+  @media (max-width:860px){
+    .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+    .rail{border-right:0;border-bottom:1px solid var(--line)}
+    .rail-head{padding:16px 16px 10px}
+    .rail-head h1{font-size:21px}
+    .count{margin:1px 0 0}
+    .filter,.rail-foot{display:none}
+    .doc-list{display:flex;gap:8px;overflow-x:auto;padding:12px 16px;flex:none}
+    .doc{
+      width:auto;flex:none;max-width:60vw;padding:9px 13px;
+      border-left:0;border-bottom:3px solid transparent;border-radius:3px;
+      background:rgba(255,255,255,.05);
+    }
+    .doc[aria-current="true"]{border-left:0;border-bottom-color:var(--brass)}
+    .doc .t{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .doc .m{display:none}
+    .bar{padding:14px 16px 12px;flex-wrap:wrap;gap:10px}
+    .sheet-wrap{padding:12px 16px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="rail">
+    <div class="rail-head">
+      <h1>Biblioteca</h1>
+      <p class="count" id="count"></p>
+      <input class="filter" id="filter" type="search" placeholder="Filtrar por nombre" aria-label="Filtrar documentos">
+    </div>
+
+    <ul class="doc-list" id="list"></ul>
+
+    <div class="rail-foot">
+      <label class="drop" id="drop">
+        Arrastra un PDF aquí para verlo
+        <input type="file" id="picker" accept="application/pdf" hidden>
+      </label>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="bar">
+      <div>
+        <h2 id="title">Sin documento</h2>
+        <p class="m" id="meta"></p>
+      </div>
+      <div class="actions">
+        <a class="act" id="openTab" target="_blank" rel="noopener" hidden>Abrir en otra pestaña</a>
+        <a class="act" id="download" download hidden>Descargar</a>
+      </div>
+    </div>
+
+    <div class="sheet-wrap">
+      <div class="sheet" id="sheet">
+        <iframe id="viewer" title="Documento PDF"></iframe>
+
+        <div class="state" id="stEmpty">
+          <h3>Todavía no hay documentos</h3>
+          <p>Sube tus PDFs a la carpeta <code>pdf/</code> junto a este archivo y agrégalos a la lista <code>DOCUMENTOS</code>, al inicio del script.</p>
+        </div>
+
+        <div class="state" id="stNoViewer">
+          <h3>Tu navegador no muestra PDFs incrustados</h3>
+          <p>Suele pasar en algunos navegadores móviles. El documento sigue disponible aquí.</p>
+          <a class="act" id="stOpen" target="_blank" rel="noopener">Abrir el PDF</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* =================================================================
+   1. TUS DOCUMENTOS — edita solo esta lista.
+      file: ruta relativa al PDF (o una URL completa).
+      meta: texto libre; sale debajo del nombre.
+   ================================================================= */
+const DOCUMENTOS = [
+  { id: "manual",   title: "Manual de onboarding",      file: "pdf/manual-onboarding.pdf", meta: "Actualizado en marzo" },
+  { id: "politica", title: "Política de reembolsos",    file: "pdf/politica-reembolsos.pdf", meta: "Vigente desde 2026" },
+  { id: "informe",  title: "Informe trimestral",        file: "pdf/informe-q1.pdf",        meta: "14 páginas" },
+  { id: "mushoku13",  title: "Mushoku Vol13",        file: "pdf\Mushoku Tensei_ Jobless Reincarnation Vol. 24.pdf", meta: "test" }
+];
+
+/* =================================================================
+   2. De aquí para abajo no necesitas tocar nada.
+   ================================================================= */
+const $ = s => document.querySelector(s);
+const list = $("#list"), viewer = $("#viewer"), sheet = $("#sheet");
+const titleEl = $("#title"), metaEl = $("#meta");
+const openTab = $("#openTab"), download = $("#download"), stOpen = $("#stOpen");
+const stEmpty = $("#stEmpty"), stNoViewer = $("#stNoViewer");
+
+// PDFs que el usuario suelta en la página: viven solo en su navegador.
+let locales = [];
+const todos = () => [...locales, ...DOCUMENTOS];
+let actual = null;
+
+// Algunos navegadores (sobre todo móviles) no incrustan PDFs.
+const incrusta = navigator.pdfViewerEnabled !== false;
+
+function pintarLista(q = "") {
+  const filtro = q.trim().toLowerCase();
+  const items = todos().filter(d => d.title.toLowerCase().includes(filtro));
+  list.textContent = "";
+
+  items.forEach(d => {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.className = "doc";
+    b.type = "button";
+    b.setAttribute("aria-current", actual && actual.id === d.id ? "true" : "false");
+
+    const t = document.createElement("span");
+    t.className = "t";
+    t.textContent = d.title;
+    b.appendChild(t);
+
+    const m = document.createElement("span");
+    m.className = "m";
+    m.textContent = d.local ? "Solo en tu navegador" : (d.meta || "");
+    b.appendChild(m);
+
+    b.addEventListener("click", () => mostrar(d, true));
+    li.appendChild(b);
+    list.appendChild(li);
+  });
+
+  const n = todos().length;
+  $("#count").textContent = n === 1 ? "1 documento" : n + " documentos";
+}
+
+function mostrar(doc, empujarHash) {
+  actual = doc;
+  titleEl.textContent = doc.title;
+  metaEl.textContent = doc.local ? "Archivo local, no se sube a ningún lado" : (doc.meta || "");
+
+  stEmpty.classList.remove("on");
+  stNoViewer.classList.toggle("on", !incrusta);
+
+  openTab.href = doc.file;
+  openTab.hidden = false;
+  stOpen.href = doc.file;
+  download.href = doc.file;
+  download.hidden = !!doc.local;
+
+  if (incrusta) {
+    viewer.src = doc.file + (doc.local ? "" : "#view=FitH");
+    sheet.classList.remove("settle");
+    void sheet.offsetWidth;          // reinicia la animación
+    sheet.classList.add("settle");
+  }
+
+  if (empujarHash && !doc.local) history.replaceState(null, "", "#" + doc.id);
+  pintarLista($("#filter").value);
+}
+
+function vacio() {
+  titleEl.textContent = "Sin documento";
+  metaEl.textContent = "";
+  openTab.hidden = download.hidden = true;
+  stEmpty.classList.add("on");
+}
+
+function abrirLocal(file) {
+  if (!file || file.type !== "application/pdf") return;
+  const doc = {
+    id: "local-" + Date.now(),
+    title: file.name.replace(/\.pdf$/i, ""),
+    file: URL.createObjectURL(file),
+    local: true
+  };
+  locales.unshift(doc);
+  mostrar(doc, false);
+}
+
+// Arrastrar y soltar
+const drop = $("#drop");
+["dragenter", "dragover"].forEach(e =>
+  document.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(e =>
+  document.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove("over"); }));
+document.addEventListener("drop", ev => abrirLocal(ev.dataTransfer?.files?.[0]));
+$("#picker").addEventListener("change", ev => abrirLocal(ev.target.files[0]));
+
+$("#filter").addEventListener("input", ev => pintarLista(ev.target.value));
+
+// Arranque: abre el documento del hash, o el primero de la lista.
+pintarLista();
+const pedido = DOCUMENTOS.find(d => "#" + d.id === location.hash);
+if (pedido) mostrar(pedido, false);
+else if (DOCUMENTOS.length) mostrar(DOCUMENTOS[0], false);
+else vacio();
+</script>
+</body>
+</html>
