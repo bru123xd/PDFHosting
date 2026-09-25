@@ -1,0 +1,19 @@
+{
+  "coleccion": { "titulo": "Mushoku Tensei", "subtitulo": "Jobless Reincarnation" },
+  "documentos": [
+    { "id": "mushoku-13", "title": "Volumen 13", "file": "pdf/mushoku-13.pdf" },
+    { "id": "mushoku-14", "title": "Volumen 14", "file": "pdf/mushoku-14.pdf" },
+    { "id": "mushoku-15", "title": "Volumen 15", "file": "pdf/mushoku-15.pdf" },
+    { "id": "mushoku-16", "title": "Volumen 16", "file": "pdf/mushoku-16.pdf" },
+    { "id": "mushoku-17", "title": "Volumen 17", "file": "pdf/mushoku-17.pdf" },
+    { "id": "mushoku-18", "title": "Volumen 18", "file": "pdf/mushoku-18.pdf" },
+    { "id": "mushoku-19", "title": "Volumen 19", "file": "pdf/mushoku-19.pdf" },
+    { "id": "mushoku-20", "title": "Volumen 20", "file": "pdf/mushoku-20.pdf" },
+    { "id": "mushoku-21", "title": "Volumen 21", "file": "pdf/mushoku-21.pdf" },
+    { "id": "mushoku-22", "title": "Volumen 22", "file": "pdf/mushoku-22.pdf" },
+    { "id": "mushoku-23", "title": "Volumen 23", "file": "pdf/mushoku-23.pdf" },
+    { "id": "mushoku-24", "title": "Volumen 24", "file": "pdf/mushoku-24.pdf" },
+    { "id": "mushoku-25", "title": "Volumen 25", "file": "pdf/mushoku-25.pdf" },
+    { "id": "mushoku-26", "title": "Volumen 26", "file": "pdf/mushoku-26.pdf" }
+  ]
+}

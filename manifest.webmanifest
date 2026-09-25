@@ -1,0 +1,15 @@
+{
+  "name": "Biblioteca",
+  "short_name": "Biblioteca",
+  "description": "Lector de volúmenes en PDF",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#121A1C",
+  "theme_color": "#151F21",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
